@@ -28,6 +28,15 @@ import {
 export default function ToDoWrapper() {
   const { todos, setTodos, loading } = useTodos();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [filter, setFilter] = useState<string>("all");
+  const [locallyUpdatedTaskId, setLocallyUpdatedTaskId] = useState<string | null>(null);
+
+  const filteredTodos = todos.filter((todo) => {
+    if (filter === "completed") return todo.completed;
+    if (filter === "notCompleted") return !todo.completed;
+    if (filter === "favorites") return todo.isFavorite;
+    return true;
+  });
 
   const addTodo = (task: string) => {
     const newTodo = {
@@ -54,14 +63,24 @@ export default function ToDoWrapper() {
   };
 
   const editTask = (task: string, id: string) => {
-    setTodos((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, task, isEditing: !t.isEditing } : t))
+    setTodos(
+      (prev) => prev.map((t) => (t.id === id ? { ...t, task, isEditing: false } : t)) // Закрываем режим редактирования
+    );
+  };
+
+  const editTaskDescription = (description: string, id: string) => {
+    setTodos(
+      (prev) => prev.map((t) => (t.id === id ? { ...t, description, isEditing: false } : t)) // Закрываем режим редактирования
     );
   };
 
   const toggleFavorite = (id: string) => {
     setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, isFavorite: !t.isFavorite } : t)));
-    console.log(todos)
+    console.log(todos);
+  };
+
+  const setLocallyUpdated = (id: string) => {
+    setLocallyUpdatedTaskId(id);
   };
 
   const handleDownload = () => {
@@ -80,40 +99,53 @@ export default function ToDoWrapper() {
         <ModalContent>
           <ModalTitle>Информация о приложении</ModalTitle>
           <ModalText>
-            Тестовое задание выполнил Егоров Андрей. tg-@AlexEquinox. Добавленные списки задач хранятся локально, а также при мнотировании компонента происходит запрос на сервер для получения данных. Они объединяются и выводятся.
+            Тестовое задание выполнил Егоров Андрей. tg-@AlexEquinox. Добавленные списки задач
+            хранятся локально, а также при мнотировании компонента происходит запрос на сервер для
+            получения данных. Они объединяются и выводятся. Чтобы пометить задачу выполненной -
+            нужно нажать на текст задачи. Чтобы добавить в избранное - нажать на икноку избранного.
+            Чтобы отредактировать - нажать на кнопку редактирвоания. Для удаления - кнопку корзины.
           </ModalText>
           <CloseButton onClick={() => setIsModalOpen(false)}>Закрыть</CloseButton>
         </ModalContent>
       </InfoModal>
-      <IconWrapper>
-        <Icon icon={faInfo} onClick={() => setIsModalOpen(true)} />
-      </IconWrapper>
+
       <Wrapper>
+        <IconWrapper>
+          <Icon icon={faInfo} onClick={() => setIsModalOpen(true)} />
+        </IconWrapper>
         <Title>Список дел</Title>
         <ToDoForm addTodo={addTodo} />
         {todos.length !== 0 && (
           <SortContainer>
             <SortTitle>Сортировать по:</SortTitle>
             <SortButtonGroup>
-              <SortButton>Все</SortButton>
-              <SortButton>Выполненные</SortButton>
+              <SortButton onClick={() => setFilter("all")}>Все</SortButton>
+              <SortButton onClick={() => setFilter("completed")}>Выполненные</SortButton>
             </SortButtonGroup>
             <SortButtonGroup>
-              <SortButton>Не выполненные</SortButton>
-              <SortButton>Избранные</SortButton>
+              <SortButton onClick={() => setFilter("notCompleted")}>Не выполненные</SortButton>
+              <SortButton onClick={() => setFilter("favorites")}>Избранные</SortButton>
             </SortButtonGroup>
           </SortContainer>
         )}
 
         {loading ? (
           <SortTitle>Загрузка...</SortTitle>
-        ) : todos.length === 0 ? (
+        ) : filteredTodos.length === 0 ? (
           <EmptyListMessage>Список пуст</EmptyListMessage>
         ) : (
           <>
-            {todos.map((todo) =>
+            {filteredTodos.map((todo) =>
               todo.isEditing ? (
-                <EditToDoForm key={todo.id} task={todo} editTodo={editTask} />
+                <EditToDoForm
+                  key={todo.id}
+                  task={todo}
+                  editTodo={editTask}
+                  editTaskDescription={editTaskDescription}
+                  setLocallyUpdated={setLocallyUpdated}
+                  deleteTodo={deleteTodo}
+                  setTodos={setTodos}
+                />
               ) : (
                 <ToDo
                   key={todo.id}
@@ -122,6 +154,7 @@ export default function ToDoWrapper() {
                   deleteTodo={deleteTodo}
                   editTodo={editTodo}
                   toggleFavorite={toggleFavorite}
+                  isLocallyUpdated={locallyUpdatedTaskId === todo.id}
                 />
               )
             )}

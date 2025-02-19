@@ -36,7 +36,7 @@ const InfoModal: React.FC<ModalProps> = ({ children, open, onClose }) => {
     <dialog ref={dialogRef} className="rounded-lg shadow-lg">
       {children}
     </dialog>,
-    document.getElementById("modal-root") as HTMLElement,
+    document.getElementById("modal-root") as HTMLElement
   );
 };
 

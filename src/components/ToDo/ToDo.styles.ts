@@ -20,9 +20,12 @@ export const Todo = styled.div`
   }
 `;
 
-export const Text = styled.p`
+export const Text = styled.div`
   max-width: 85%;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  word-break: break-word;
 
   &.completed {
     color: #c5aeff;
@@ -40,5 +43,37 @@ export const Icons = styled.div`
   .fa-star-regular,
   .fa-pen-to-square {
     cursor: pointer;
+  }
+`;
+
+export const IconWrapper = styled.div`
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+
+  .tooltip-icon {
+    cursor: pointer;
+  }
+
+  .tooltip-text {
+    visibility: hidden;
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.75);
+    color: white;
+    text-align: center;
+    border-radius: 4px;
+    padding: 5px;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+
+  &:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
   }
 `;

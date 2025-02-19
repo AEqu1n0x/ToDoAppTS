@@ -1,7 +1,6 @@
 import styled from "styled-components";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-
 export const Container = styled.div`
   margin-top: 5rem;
   display: flex;
@@ -94,12 +93,16 @@ export const ModalContent = styled.div`
   text-align: center;
   font-size: 1.2rem;
   position: fixed;
+  width: 60%;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   background-color: #333;
   border-radius: 10px;
-  z-index: 1000; /* Обеспечивает, что окно будет поверх остальных элементов */
+  z-index: 1000;
+  @media (max-width: 650px) {
+    width: 90%;
+  }
 `;
 
 export const ModalTitle = styled.h2`

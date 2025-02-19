@@ -25,7 +25,6 @@ interface Todo {
 }
 
 export function useTodos() {
-  // Загружаем todos из localStorage при инициализации
   const [todos, setTodos] = useState<Todo[]>(() => {
     const savedTodos = localStorage.getItem("todos");
     return savedTodos ? JSON.parse(savedTodos) : [];
@@ -34,7 +33,6 @@ export function useTodos() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  // Сохраняем todos в localStorage при каждом изменении
   useEffect(() => {
     localStorage.setItem("todos", JSON.stringify(todos));
   }, [todos]);
@@ -49,10 +47,16 @@ export function useTodos() {
 
       const { data: apiData, meta } = response.data;
 
+      const completedStatuses = [
+        "Выполнена", "Сделана", "Готово", "Исполнено", "Завершено", "Закрыта", "Done",
+        "Завершена", "Финиш", "Выполнено", "Окончено", "Сделано", "Успешно",
+        "Resolved", "Completed", "Finished", "Closed"
+      ];
+
       const transformed: Todo[] = apiData.map((item) => ({
         id: String(item.id),
         task: item.attributes.title,
-        completed: item.attributes.status === "Выполнена",
+        completed: completedStatuses.includes(item.attributes.status),
         isEditing: false,
         isFavorite: false,
         status: item.attributes.status,
@@ -65,7 +69,6 @@ export function useTodos() {
         const prevMap = new Map(prev.map((t) => [t.id, t]));
         const updated = transformed.map((serverTodo) => {
           const existing = prevMap.get(serverTodo.id);
-          // Объединяем данные: берём сохранённые состояния из localStorage
           return existing
             ? {
                 ...existing,
@@ -74,6 +77,7 @@ export function useTodos() {
                 description: serverTodo.description,
                 createdAt: serverTodo.createdAt,
                 updatedAt: serverTodo.updatedAt,
+                completed: serverTodo.completed
               }
             : serverTodo;
         });
