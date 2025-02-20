@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import {
   Form,
@@ -9,6 +9,7 @@ import {
   ServerTag,
   Textarea,
   ErrorDiv,
+  DivCentered,
 } from "./EditToDoForm.styles";
 
 interface EditToDoFormProps {
@@ -24,7 +25,7 @@ interface EditToDoFormProps {
     description?: string;
     updatedAt?: string;
   };
-  setLocallyUpdated: (id: string) => void;
+  setLocallyUpdated: (id: string | null) => void;
   deleteTodo: (id: string) => void;
   setTodos: (todos: any[]) => void;
 }
@@ -39,14 +40,23 @@ export default function EditToDoForm({
 }: EditToDoFormProps) {
   const [value, setValue] = useState(task.task);
   const [valueDescription, setValueDescription] = useState(task.description || "");
-  const [formValid, setFormValid] = useState(false);
   const isServerTask = !!task.createdAt;
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const validateForm = (taskValue: string, descValue: string) => {
-    setFormValid(taskValue.trim() !== "" || descValue.trim() !== "");
-  };
+  const [isDirty, setIsDirty] = useState(false);
+
+  const checkChanges = useCallback(() => {
+    const titleChanged = value.trim() !== task.task.trim();
+    const descChanged = valueDescription.trim() !== (task.description?.trim() || "");
+
+    return titleChanged || descChanged;
+  }, [value, valueDescription, task.task, task.description]);
+
+  useEffect(() => {
+    console.log(task);
+    setIsDirty(checkChanges());
+  }, [value, valueDescription, task.completed, checkChanges]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -89,7 +99,49 @@ export default function EditToDoForm({
       setTodos(updatedTodos);
       editTodo(updatedTask.task, updatedTask.id);
       editTaskDescription(updatedTask.description || "", updatedTask.id);
-      setLocallyUpdated(updatedTask.id);
+
+      setLocallyUpdated(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Неизвестная ошибка");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleUpdateToServer = async () => {
+    if (!task.id) return;
+
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      const response = await axios.put(`https://cms.laurence.host/api/tasks/${task.id}`, {
+        data: {
+          status: task.completed ? "Выполнена" : "Не выполнена",
+          title: value,
+          description: valueDescription,
+        },
+      });
+
+      const result = response.data;
+      const updatedTask = {
+        ...task,
+        title: result.data.attributes.title,
+        updatedAt: result.data.attributes.updatedAt,
+        description: result.data.attributes.description,
+      };
+
+      deleteTodo(task.id);
+      const todos = JSON.parse(localStorage.getItem("todos") || "[]").filter(
+        (t: any) => t.id !== task.id
+      );
+      const updatedTodos = [...todos, updatedTask];
+      localStorage.setItem("todos", JSON.stringify(updatedTodos));
+      setTodos(updatedTodos);
+      editTodo(updatedTask.title, updatedTask.id);
+      editTaskDescription(updatedTask.description || "", updatedTask.id);
+
+      setLocallyUpdated(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Неизвестная ошибка");
     } finally {
@@ -99,22 +151,22 @@ export default function EditToDoForm({
 
   return (
     <Form onSubmit={handleSubmit}>
-      <ServerTag isServer={isServerTask}>
+      <ServerTag $isServer={isServerTask}>
         {isServerTask ? "Серверная задача" : "Локальная задача"}
       </ServerTag>
 
       <InfoBlock>
         {task.createdAt && (
-          <div>
+          <DivCentered>
             <label>Создана:</label>
             <span>{new Date(task.createdAt).toLocaleString()}</span>
-          </div>
+          </DivCentered>
         )}
         {task.updatedAt && (
-          <div>
+          <DivCentered>
             <label>Обновлена:</label>
             <span>{new Date(task.updatedAt).toLocaleString()}</span>
-          </div>
+          </DivCentered>
         )}
         {task.status && (
           <div>
@@ -129,7 +181,6 @@ export default function EditToDoForm({
             placeholder={task.description ? task.description : "Отсутствует"}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
               setValueDescription(e.target.value);
-              validateForm(value, e.target.value);
             }}
           />
         </div>
@@ -141,25 +192,29 @@ export default function EditToDoForm({
         placeholder="Введите новый текст задачи"
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           setValue(e.target.value);
-          setFormValid(e.target.value.trim() !== "");
         }}
       />
 
       <ButtonGroup>
-        <Button type="submit" disabled={!formValid}>
+        <Button type="submit" disabled={false}>
           Изменить локально
         </Button>
         {task.createdAt ? (
           <>
-            <Button type="button" disabled={!formValid} style={{ marginLeft: "10px" }}>
-              Обновить на сервере
+            <Button
+              onClick={handleUpdateToServer}
+              type="button"
+              disabled={!isDirty || isSaving}
+              style={{ marginLeft: "10px" }}
+            >
+              {isSaving ? "Обновление..." : "Обновить на сервере"}
             </Button>
           </>
         ) : (
           <>
             <Button
               type="button"
-              disabled={!formValid || isSaving}
+              disabled={isSaving}
               onClick={handleSaveToServer}
               style={{ marginLeft: "10px" }}
             >

@@ -53,7 +53,7 @@ export function useTodos() {
         "Resolved", "Completed", "Finished", "Closed"
       ];
 
-      const transformed: Todo[] = apiData.map((item) => ({
+      const serverTodos: Todo[] = apiData.map((item) => ({
         id: String(item.id),
         task: item.attributes.title,
         completed: completedStatuses.includes(item.attributes.status),
@@ -66,23 +66,15 @@ export function useTodos() {
       }));
 
       setTodos((prev) => {
-        const prevMap = new Map(prev.map((t) => [t.id, t]));
-        const updated = transformed.map((serverTodo) => {
-          const existing = prevMap.get(serverTodo.id);
+        const localTodos = prev.filter((t) => !t.createdAt); 
+        const updatedServerTodos = serverTodos.map((st) => {
+          const existing = prev.find((t) => t.id === st.id);
           return existing
-            ? {
-                ...existing,
-                task: serverTodo.task,
-                status: serverTodo.status,
-                description: serverTodo.description,
-                createdAt: serverTodo.createdAt,
-                updatedAt: serverTodo.updatedAt,
-                completed: serverTodo.completed
-              }
-            : serverTodo;
+            ? { ...st, isFavorite: existing.isFavorite, isEditing: existing.isEditing }
+            : st;
         });
-        const remaining = prev.filter((t) => !transformed.some((st) => st.id === t.id));
-        return [...remaining, ...updated];
+
+        return [...localTodos, ...updatedServerTodos];
       });
       setTotalPages(meta.pagination.pageCount);
     } catch (error) {

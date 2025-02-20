@@ -63,23 +63,20 @@ export default function ToDoWrapper() {
   };
 
   const editTask = (task: string, id: string) => {
-    setTodos(
-      (prev) => prev.map((t) => (t.id === id ? { ...t, task, isEditing: false } : t)) // Закрываем режим редактирования
-    );
+    setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, task, isEditing: false } : t)));
   };
 
   const editTaskDescription = (description: string, id: string) => {
-    setTodos(
-      (prev) => prev.map((t) => (t.id === id ? { ...t, description, isEditing: false } : t)) // Закрываем режим редактирования
+    setTodos((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, description, isEditing: false } : t))
     );
   };
 
   const toggleFavorite = (id: string) => {
     setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, isFavorite: !t.isFavorite } : t)));
-    console.log(todos);
   };
 
-  const setLocallyUpdated = (id: string) => {
+  const setLocallyUpdated = (id: string | null) => {
     setLocallyUpdatedTaskId(id);
   };
 
@@ -139,7 +136,10 @@ export default function ToDoWrapper() {
               todo.isEditing ? (
                 <EditToDoForm
                   key={todo.id}
-                  task={todo}
+                  task={{
+                    ...todo,
+                    completed: todo.completed,
+                  }}
                   editTodo={editTask}
                   editTaskDescription={editTaskDescription}
                   setLocallyUpdated={setLocallyUpdated}

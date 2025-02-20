@@ -45,9 +45,16 @@ export default function ToDo({
     try {
       await axios.delete(`https://cms.laurence.host/api/tasks/${task.id}`);
       deleteTodo(task.id);
-      setIsDeleting(false);
     } catch (error) {
-      console.error("Ошибка удаления задачи:", error);
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 404) {
+          console.warn("Задача не найдена на сервере, удаляем локально.");
+          deleteTodo(task.id);
+        } else {
+          console.error("Ошибка удаления задачи:", error);
+        }
+      }
+    } finally {
       setIsDeleting(false);
     }
   };
@@ -63,14 +70,20 @@ export default function ToDo({
             </span>
           </IconWrapper>
         )}
+
         {task.task}
       </Text>
       <Icons>
         <FontAwesomeIcon
           icon={task.isFavorite ? faStar : faStarRegular}
           onClick={() => toggleFavorite(task.id)}
+          data-testid="favorite-icon"
         />
-        <FontAwesomeIcon icon={faPenToSquare} onClick={() => editTodo(task.id)} />
+        <FontAwesomeIcon
+          icon={faPenToSquare}
+          onClick={() => editTodo(task.id)}
+          data-testid="edit-icon"
+        />
 
         {isServerTask ? (
           isDeleting ? (
@@ -79,7 +92,12 @@ export default function ToDo({
             <FontAwesomeIcon icon={faTrash} onClick={handleDelete} />
           )
         ) : (
-          <FontAwesomeIcon icon={faTrash} onClick={() => deleteTodo(task.id)} />
+          <FontAwesomeIcon
+            aria-label="Удалить"
+            icon={faTrash}
+            onClick={() => deleteTodo(task.id)}
+            data-testid="delete-icon"
+          />
         )}
       </Icons>
     </Todo>

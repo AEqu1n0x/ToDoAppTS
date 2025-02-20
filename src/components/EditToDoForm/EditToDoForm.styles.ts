@@ -50,6 +50,8 @@ export const InfoBlock = styled.div`
 
   div {
     margin: 0.5rem 0;
+    display: flex;
+    align-items: center;
   }
 
   label {
@@ -65,7 +67,7 @@ export const InfoBlock = styled.div`
   }
 
   p {
-    margin: 0.5rem 0 0 0;
+    margin: 0 0 0 0;
     color: #e0e0e0;
     line-height: 1.4;
     word-wrap: break-word;
@@ -119,11 +121,11 @@ export const ButtonGroup = styled.div`
   margin-top: 1rem;
 `;
 
-export const ServerTag = styled.div<{ isServer: boolean }>`
+export const ServerTag = styled.div<{ $isServer: boolean }>`
   position: absolute;
   top: -12px;
   left: 15px;
-  background: ${({ isServer }) => (isServer ? "#8758ff" : "#7e9100")};
+  background: ${({ $isServer }) => ($isServer ? "#8758ff" : "#7e9100")};
   color: white;
   padding: 4px 12px;
   border-radius: 15px;
@@ -133,6 +135,14 @@ export const ServerTag = styled.div<{ isServer: boolean }>`
 `;
 
 export const ErrorDiv = styled.div`
-  color: "#ff4444";
-  margintop: "10px";
+  color: #e33327;
+  margin-top: 10px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+`;
+
+export const DivCentered = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
